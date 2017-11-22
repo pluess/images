@@ -40,6 +40,6 @@ class Next extends Command
     {
         /** @var Image */
         $image = Image::next();
-        $this->info('Next image is ' . $image->path);
+        $this->info('Next image is ' . $image->id . ': ' . $image->path);
     }
 }

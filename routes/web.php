@@ -20,3 +20,5 @@ Route::get('/image/{id}', 'ImageController@image')
     ->name('image-id');
 Route::get('/image/current', 'ImageController@current')
     ->name('image-current');
+Route::view('/slideshow', 'slideshow')
+    ->name('slideshow');

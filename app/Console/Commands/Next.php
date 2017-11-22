@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Image;
+use App\Utils\SocketIoUtil;
 use Illuminate\Console\Command;
 
 class Next extends Command
@@ -41,5 +42,6 @@ class Next extends Command
         /** @var Image */
         $image = Image::next();
         $this->info('Next image is ' . $image->id . ': ' . $image->path);
+        SocketIoUtil::notifyNextImage();
     }
 }

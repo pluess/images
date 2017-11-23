@@ -20,5 +20,9 @@ Route::get('/image/{id}', 'ImageController@image')
     ->name('image-id');
 Route::get('/image/current', 'ImageController@current')
     ->name('image-current');
+Route::get('/admin', 'AdminController@admin')
+    ->name('admin');
+Route::get('/next', 'AdminController@next')
+    ->name('next');
 Route::view('/slideshow', 'slideshow')
     ->name('slideshow');

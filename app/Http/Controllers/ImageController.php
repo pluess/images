@@ -35,7 +35,8 @@ class ImageController extends Controller
     }
 
     /**
-     * Returns an image by id.
+     * Returns an image by id. Since this returns the same image per id for
+     * every call ETag support is switched on to support browser caching.
      *
      * @param int $id
      * @return BinaryFileResponse

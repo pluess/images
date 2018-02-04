@@ -28,7 +28,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script>
     $(function () {
-        var socket = io('http://192.168.1.102:3000');
+        var socket = io('{{env('PICS_SOCKET_SERVER')}}');
         socket.on('pics message', function (msg) {
             location.reload();
         });

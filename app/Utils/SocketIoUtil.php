@@ -9,7 +9,8 @@ class SocketIoUtil
 {
     public static function notifyNextImage()
     {
-        $client = new Client(new Version2X('http://localhost:3000'));
+        $socketIoServer = env('PICS_SOCKET_SERVER');
+        $client = new Client(new Version2X($socketIoServer));
         $client->initialize();
         $client->emit('pics message', ['msg' => 'next']);
         $client->close();

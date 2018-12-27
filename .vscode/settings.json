@@ -1,0 +1,6 @@
+{
+    "C_Cpp.intelliSenseEngineFallback": "Disabled",
+    "terminal.integrated.env.osx": {
+        "PATH": "/Users/ernst/.platformio/penv/bin:/Users/ernst/.composer/vendor/bin:/Applications/MAMP/Library/bin:/Applications/MAMP/bin/php/php7.0.22/bin:/usr/local/sbin:/usr/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin"
+    }
+}

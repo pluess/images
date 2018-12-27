@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Image;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use \PHPExif\Reader\Reader;
+use Illuminate\Support\Facades\Log;
 
 class ImageController extends Controller
 {
 
-    /**
+
+        /**
      * Returns the current image. Since this image may be different
      * for every call, all browser image caching headers are swichted off.
      *
@@ -17,18 +21,23 @@ class ImageController extends Controller
     public function current()
     {
         /** @var Image */
-        $image = Image::where('used', true)
+        $dbImage = Image::where('used', true)
             ->orderBy('updated_at', 'DESC')
             ->first();
 
-        /** @var BinaryFileResponse */
-        $response = new BinaryFileResponse($image->path, 200, [], true, null, true);
+        $rotatedImage = $this->rotate($dbImage->path);
 
-        // modify headers to disable any kind of caching
-        $response->headers->addCacheControlDirective('no-cache', true);
-        $response->headers->addCacheControlDirective('max-age', 0);
-        $response->headers->addCacheControlDirective('must-revalidate', true);
-        $response->headers->addCacheControlDirective('no-store', true);
+        // Generate response
+        $response = new Response();
+
+        // Set headers, avoid caching
+        $response->headers->set('Content-type', 'image/jpeg');
+        $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+        // Send headers before outputting anything
+        $response->sendHeaders();
+
+        imagejpeg($rotatedImage);
 
         return $response;
 
@@ -41,15 +50,66 @@ class ImageController extends Controller
      * @param int $id
      * @return BinaryFileResponse
      */
-    public function image(int $id)
+    public function image(Request $request, int $id)
     {
         /** @var Image */
-        $image = Image::where('id', '=', $id)
+        $dbImage = Image::where('id', '=', $id)
             ->get()
             ->first();
 
-        /** @var BinaryFileResponse */
-        $response = new BinaryFileResponse($image->path, 200, array(), true, null, true);
+        $lastModifiedTime = (new \DateTime())->setTimestamp(filemtime($dbImage->path)); 
+        $eTag = md5_file($dbImage->path);
+
+        // No need to rotate and send the file again
+        // if we get the same ETag
+        $requestETag = $request->getETags();
+        if (!empty($requestETag)) {
+            Log::debug($dbImage->path . ', eTag='. $eTag . ', reqeuestETag=' . $requestETag[0]);
+            if ($eTag===$requestETag[0]) {
+                $response = new Response();
+                $response->setNotModified();
+                Log::debug("Valid ETag detected, return 304.");
+                return $response;
+            }
+        }
+
+        $rotatedImage = $this->rotate($dbImage->path);
+
+        // Set headers
+        $response = new Response();
+        $response->headers->set('Content-type', 'image/jpeg');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $dbImage->path . '";');
+        $response->setEtag($eTag);
+        $response->setLastModified($lastModifiedTime);
+        $response->setPublic(true);
+        
+        // Send headers before outputting anything
+        $response->sendHeaders();
+
+        imagejpeg($rotatedImage);
+
         return $response;
     }
+
+    private function rotate(string $imagePath) {
+        $reader = Reader::factory(Reader::TYPE_NATIVE);
+        $exif = $reader->read($imagePath);
+
+        Log::debug($imagePath . ' orientation=' . $exif->getOrientation());
+
+        $image = imagecreatefromstring( file_get_contents($imagePath));
+        switch($exif->getOrientation()) {
+            case 6:
+                $rotatedImage = imagerotate($image, 270, 0);
+                break;
+            case 8:
+                $rotatedImage = imagerotate($image, 90, 0);
+                break;
+            default:
+                $rotatedImage = $image;
+        }
+
+        return $rotatedImage;
+    }
+
 }
